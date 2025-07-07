@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const projectName = process.argv[2];
+
+if (!projectName) {
+  console.error('Please provide a project name');
+  console.log('Usage: npx rn-bootstrap-cli <ProjectName>');
+  process.exit(1);
+}
+
+console.log(`🚀 Creating React Native project: ${projectName}`);
+
+try {
+  // Create React Native project
+  console.log('📱 Initializing React Native project...');
+  execSync(`npx react-native init ${projectName} --template react-native-template-typescript`, {
+    stdio: 'inherit',
+  });
+
+  // Change to project directory
+  process.chdir(projectName);
+
+  // Copy bootstrap files
+  console.log('📋 Copying bootstrap template...');
+  const templateDir = path.join(__dirname, '..', 'template');
+  const projectDir = process.cwd();
+
+  // Copy all template files
+  copyRecursive(templateDir, projectDir);
+
+  // Install additional dependencies
+  console.log('📦 Installing dependencies...');
+  execSync('npm install', { stdio: 'inherit' });
+
+  // Install iOS pods
+  if (process.platform === 'darwin') {
+    console.log('🍎 Installing iOS pods...');
+    execSync('cd ios && pod install', { stdio: 'inherit' });
+  }
+
+  console.log('✅ Project created successfully!');
+  console.log(`\n📁 Navigate to your project: cd ${projectName}`);
+  console.log('🏃 Run the app:');
+  console.log('  • iOS: npm run ios');
+  console.log('  • Android: npm run android');
+  console.log('\n🔧 Development tools:');
+  console.log('  • Start Metro: npm start');
+  console.log('  • Run tests: npm test');
+  console.log('  • Lint code: npm run lint');
+  console.log('\n📚 Demo credentials:');
+  console.log('  • Email: demo@example.com');
+  console.log('  • Password: password123');
+
+} catch (error) {
+  console.error('❌ Error creating project:', error.message);
+  process.exit(1);
+}
+
+function copyRecursive(src, dest) {
+  if (!fs.existsSync(src)) return;
+
+  const stats = fs.statSync(src);
+  
+  if (stats.isDirectory()) {
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(src);
+    files.forEach(file => {
+      copyRecursive(path.join(src, file), path.join(dest, file));
+    });
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
